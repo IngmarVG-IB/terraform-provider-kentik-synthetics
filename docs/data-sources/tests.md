@@ -3,20 +3,20 @@
 page_title: "kentik-synthetics_tests Data Source - kentik-synthetics"
 subcategory: ""
 description: |-
-  Data source representing list of synthetic tests
+  All active and paused synthetic tests of the account.
 ---
 
 # kentik-synthetics_tests (Data Source)
 
-Data source representing list of synthetic tests
+All active and paused synthetic tests of the account.
 
 ## Example Usage
 
 ```terraform
-data "kentik-synthetics_tests" "tests" {}
+data "kentik-synthetics_tests" "all" {}
 
-output "tests_list" {
-  value = data.kentik-synthetics_tests.tests
+output "paused_test_names" {
+  value = [for t in data.kentik-synthetics_tests.all.items : t.name if t.status == "TEST_STATUS_PAUSED"]
 }
 ```
 
@@ -26,8 +26,8 @@ output "tests_list" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `invalid_tests_count` (Number)
-- `items` (List of Object) (see [below for nested schema](#nestedatt--items))
+- `invalid_tests_count` (Number) Number of invalid entries encountered while collecting data.
+- `items` (List of Object) Tests. (see [below for nested schema](#nestedatt--items))
 
 <a id="nestedatt--items"></a>
 ### Nested Schema for `items`
@@ -39,6 +39,7 @@ Read-Only:
 - `edate` (String)
 - `expires_on` (String)
 - `id` (String)
+- `labels` (Set of String)
 - `last_updated_by` (List of Object) (see [below for nested schema](#nestedobjatt--items--last_updated_by))
 - `name` (String)
 - `settings` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings))
@@ -72,6 +73,7 @@ Read-Only:
 
 - `agent` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--agent))
 - `agent_ids` (List of String)
+- `alerting` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--alerting))
 - `count` (Number)
 - `dns` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--dns))
 - `dns_grid` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--dns_grid))
@@ -85,16 +87,21 @@ Read-Only:
 - `limit` (Number)
 - `monitoring_settings` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--monitoring_settings))
 - `network_grid` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--network_grid))
+- `network_mesh` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--network_mesh))
+- `notes` (String)
+- `notification_channels` (List of String)
 - `page_load` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--page_load))
 - `period` (Number)
 - `ping` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--ping))
 - `port` (Number)
 - `protocol` (String)
 - `rollup_level` (Number)
+- `schedule` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--schedule))
 - `servers` (List of String)
 - `site` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--site))
 - `tag` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--tag))
 - `tasks` (List of String)
+- `throughput` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--throughput))
 - `trace` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--trace))
 - `url` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--url))
 
@@ -103,7 +110,50 @@ Read-Only:
 
 Read-Only:
 
+- `reciprocal` (Boolean)
 - `target` (String)
+- `use_local_ip` (Boolean)
+
+
+<a id="nestedobjatt--items--settings--alerting"></a>
+### Nested Schema for `items.settings.alerting`
+
+Read-Only:
+
+- `alerting_type` (String)
+- `disable_warning_notifications` (Boolean)
+- `grouped_alert_settings` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--alerting--grouped_alert_settings))
+
+<a id="nestedobjatt--items--settings--alerting--grouped_alert_settings"></a>
+### Nested Schema for `items.settings.alerting.grouped_alert_settings`
+
+Read-Only:
+
+- `default` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--alerting--grouped_alert_settings--default))
+- `overrides` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--alerting--grouped_alert_settings--overrides))
+
+<a id="nestedobjatt--items--settings--alerting--grouped_alert_settings--default"></a>
+### Nested Schema for `items.settings.alerting.grouped_alert_settings.default`
+
+Read-Only:
+
+- `filter_ids` (List of Number)
+- `metric` (String)
+- `percent_of_src_group` (Number)
+- `src_group_by` (String)
+
+
+<a id="nestedobjatt--items--settings--alerting--grouped_alert_settings--overrides"></a>
+### Nested Schema for `items.settings.alerting.grouped_alert_settings.overrides`
+
+Read-Only:
+
+- `filter_ids` (List of Number)
+- `metric` (String)
+- `percent_of_src_group` (Number)
+- `src_group_by` (String)
+
+
 
 
 <a id="nestedobjatt--items--settings--dns"></a>
@@ -111,7 +161,11 @@ Read-Only:
 
 Read-Only:
 
+- `port` (Number)
+- `record_type` (String)
+- `servers` (List of String)
 - `target` (String)
+- `timeout` (Number)
 - `type` (String)
 
 
@@ -120,7 +174,12 @@ Read-Only:
 
 Read-Only:
 
+- `port` (Number)
+- `record_type` (String)
+- `servers` (List of String)
+- `target` (String)
 - `targets` (List of String)
+- `timeout` (Number)
 - `type` (String)
 
 
@@ -131,6 +190,8 @@ Read-Only:
 
 - `direction` (String)
 - `inet_direction` (String)
+- `max_ip_targets` (Number)
+- `max_providers` (Number)
 - `max_tasks` (Number)
 - `target` (String)
 - `target_refresh_interval_millis` (Number)
@@ -142,7 +203,18 @@ Read-Only:
 
 Read-Only:
 
+- `activation` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--health_settings--activation))
+- `cert_expiry_critical` (Number)
+- `cert_expiry_warning` (Number)
+- `disable_alerts` (Boolean)
+- `disabled_metrics` (List of Object) (see [below for nested schema](#nestedobjatt--items--settings--health_settings--disabled_metrics))
+- `dns_latency_critical` (Number)
+- `dns_latency_critical_stddev` (Number)
+- `dns_latency_warning` (Number)
+- `dns_latency_warning_stddev` (Number)
 - `dns_valid_codes` (List of Number)
+- `dns_valid_ips` (String)
+- `health_disabled` (Boolean)
 - `http_latency_critical` (Number)
 - `http_latency_critical_stddev` (Number)
 - `http_latency_warning` (Number)
@@ -158,6 +230,40 @@ Read-Only:
 - `latency_warning_stddev` (Number)
 - `packet_loss_critical` (Number)
 - `packet_loss_warning` (Number)
+- `throughput_critical` (Number)
+- `throughput_critical_stddev` (Number)
+- `throughput_warning` (Number)
+- `throughput_warning_stddev` (Number)
+
+<a id="nestedobjatt--items--settings--health_settings--activation"></a>
+### Nested Schema for `items.settings.health_settings.activation`
+
+Read-Only:
+
+- `grace_period` (String)
+- `time_unit` (String)
+- `time_window` (String)
+- `times` (String)
+
+
+<a id="nestedobjatt--items--settings--health_settings--disabled_metrics"></a>
+### Nested Schema for `items.settings.health_settings.disabled_metrics`
+
+Read-Only:
+
+- `dns_codes` (Boolean)
+- `dns_ips` (Boolean)
+- `dns_latency` (Boolean)
+- `http_cert_expiry` (Boolean)
+- `http_codes` (Boolean)
+- `http_headers` (Boolean)
+- `http_latency` (Boolean)
+- `ping_jitter` (Boolean)
+- `ping_latency` (Boolean)
+- `ping_packet_loss` (Boolean)
+- `throughput_bandwidth` (Boolean)
+- `transaction_latency` (Boolean)
+
 
 
 <a id="nestedobjatt--items--settings--hostname"></a>
@@ -188,6 +294,7 @@ Read-Only:
 Read-Only:
 
 - `targets` (List of String)
+- `use_local_ip` (Boolean)
 
 
 <a id="nestedobjatt--items--settings--monitoring_settings"></a>
@@ -204,6 +311,15 @@ Read-Only:
 Read-Only:
 
 - `targets` (List of String)
+- `use_local_ip` (Boolean)
+
+
+<a id="nestedobjatt--items--settings--network_mesh"></a>
+### Nested Schema for `items.settings.network_mesh`
+
+Read-Only:
+
+- `use_local_ip` (Boolean)
 
 
 <a id="nestedobjatt--items--settings--page_load"></a>
@@ -211,7 +327,11 @@ Read-Only:
 
 Read-Only:
 
+- `css_selectors` (Map of String)
+- `headers` (Map of String)
+- `ignore_tls_errors` (Boolean)
 - `target` (String)
+- `timeout` (Number)
 
 
 <a id="nestedobjatt--items--settings--ping"></a>
@@ -221,8 +341,22 @@ Read-Only:
 
 - `count` (Number)
 - `delay` (Number)
+- `dscp` (Number)
 - `expiry` (Number)
 - `period` (Number)
+- `port` (Number)
+- `protocol` (String)
+- `timeout` (Number)
+
+
+<a id="nestedobjatt--items--settings--schedule"></a>
+### Nested Schema for `items.settings.schedule`
+
+Read-Only:
+
+- `enabled` (Boolean)
+- `end` (Number)
+- `start` (Number)
 
 
 <a id="nestedobjatt--items--settings--site"></a>
@@ -241,6 +375,18 @@ Read-Only:
 - `target` (String)
 
 
+<a id="nestedobjatt--items--settings--throughput"></a>
+### Nested Schema for `items.settings.throughput`
+
+Read-Only:
+
+- `bandwidth` (Number)
+- `duration` (Number)
+- `omit` (Number)
+- `port` (Number)
+- `protocol` (String)
+
+
 <a id="nestedobjatt--items--settings--trace"></a>
 ### Nested Schema for `items.settings.trace`
 
@@ -248,11 +394,14 @@ Read-Only:
 
 - `count` (Number)
 - `delay` (Number)
+- `dscp` (Number)
 - `expiry` (Number)
 - `limit` (Number)
+- `mtu` (Boolean)
 - `period` (Number)
 - `port` (Number)
 - `protocol` (String)
+- `timeout` (Number)
 
 
 <a id="nestedobjatt--items--settings--url"></a>
@@ -260,4 +409,9 @@ Read-Only:
 
 Read-Only:
 
+- `body` (String)
+- `headers` (Map of String)
+- `ignore_tls_errors` (Boolean)
+- `method` (String)
 - `target` (String)
+- `timeout` (Number)

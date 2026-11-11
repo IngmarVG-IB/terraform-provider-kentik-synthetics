@@ -3,20 +3,25 @@
 page_title: "kentik-synthetics_agents Data Source - kentik-synthetics"
 subcategory: ""
 description: |-
-  Data source representing list of synthetic test agents
+  All synthetic monitoring agents available to the account, optionally filtered by great-circle distance from a reference point.
 ---
 
 # kentik-synthetics_agents (Data Source)
 
-Data source representing list of synthetic test agents
+All synthetic monitoring agents available to the account, optionally filtered by great-circle distance from a reference point.
 
 ## Example Usage
 
 ```terraform
-data "kentik-synthetics_agents" "agents" {}
+# All agents within 1000 km of Amsterdam.
+data "kentik-synthetics_agents" "near_amsterdam" {
+  latitude     = 52.37
+  longitude    = 4.89
+  max_distance = 1000
+}
 
-output "agents_list" {
-  value = data.kentik-synthetics_agents.agents
+output "agent_ids_near_amsterdam" {
+  value = [for a in data.kentik-synthetics_agents.near_amsterdam.items : a.id]
 }
 ```
 
@@ -25,16 +30,16 @@ output "agents_list" {
 
 ### Optional
 
-- `latitude` (Number)
-- `longitude` (Number)
-- `max_distance` (Number)
-- `min_distance` (Number)
+- `latitude` (Number) Latitude of the reference point for distance filtering (signed decimal degrees).
+- `longitude` (Number) Longitude of the reference point for distance filtering (signed decimal degrees).
+- `max_distance` (Number) Maximum distance from the reference point, in kilometers (default unlimited).
+- `min_distance` (Number) Minimum distance from the reference point, in kilometers (default 0).
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `invalid_agents_count` (Number)
-- `items` (List of Object) (see [below for nested schema](#nestedatt--items))
+- `invalid_agents_count` (Number) Number of invalid entries encountered while collecting data.
+- `items` (List of Object) Agents. (see [below for nested schema](#nestedatt--items))
 
 <a id="nestedatt--items"></a>
 ### Nested Schema for `items`
@@ -45,20 +50,37 @@ Read-Only:
 - `alias` (String)
 - `asn` (Number)
 - `city` (String)
+- `cloud_provider` (String)
+- `cloud_region` (String)
 - `cloud_vpc` (String)
 - `country` (String)
 - `family` (String)
 - `id` (String)
 - `ip` (String)
+- `labels` (Set of String)
 - `last_authed` (String)
 - `lat` (Number)
 - `local_ip` (String)
 - `long` (Number)
+- `metadata` (List of Object) (see [below for nested schema](#nestedobjatt--items--metadata))
 - `name` (String)
 - `os` (String)
 - `region` (String)
 - `site_id` (String)
+- `site_name` (String)
 - `status` (String)
 - `test_ids` (List of String)
 - `type` (String)
 - `version` (String)
+
+<a id="nestedobjatt--items--metadata"></a>
+### Nested Schema for `items.metadata`
+
+Read-Only:
+
+- `private_ipv4_addresses` (List of String)
+- `private_ipv6_addresses` (List of String)
+- `public_ipv4_addresses` (List of String)
+- `public_ipv6_addresses` (List of String)
+- `static_ipv4` (Boolean)
+- `static_ipv6` (Boolean)

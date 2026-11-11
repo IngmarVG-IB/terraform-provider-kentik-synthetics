@@ -1,47 +1,30 @@
 ---
-layout: ""
 page_title: "Provider: Kentik Synthetics"
 description: |-
-  The Kentik Synthetics provider is used to work with Kentik synthetics tests.
+  Manage Kentik synthetic monitoring tests, agents and agent alerts.
 ---
 
 # Kentik Synthetics provider
 
-The Kentik Synthetics provider is used to work with Kentik synthetics tests.
+The Kentik Synthetics provider manages [Kentik synthetic monitoring](https://kb.kentik.com/v4/Ma00.htm):
+synthetic tests of every type supported by the API, private agents and offline-agent alerts.
+
+It uses the Kentik v6 gRPC API, `kentik.synthetics.v202309`, at `grpc.api.kentik.com:443`
+(`grpc.api.kentik.eu:443` for the EU cluster).
+
+-> **Upgrading from 0.2.x?** The provider moved from the beta API (v202101beta1) to v202309. Existing
+configurations keep working, with deprecation warnings. See the
+[upgrade guide](https://github.com/kentik/terraform-provider-kentik-synthetics/blob/master/docs/UPGRADING.md).
 
 ## Example usage
 
-Go to folder with Terraform `.tf` definition files for Synthetics resources/data sources ([./examples/**](./examples)):
+{{ tffile "examples/provider/provider.tf" }}
 
-1. Configure provider with parameters:
+Credentials can also come from the environment:
 
-```terraform
-provider "kentik-synthetics" {
-  // Authorization email (required). Can also be specified with KTAPI_AUTH_EMAIL environment variable.
-  email = "john@acme.com"
-  // Authorization token (required). Can also be specified with KTAPI_AUTH_TOKEN environment variable.
-  token = "token"
-}
-```
-
-or environment variables:
-
-```bash
-export KTAPI_AUTH_EMAIL="john@acme.com"
-export KTAPI_AUTH_TOKEN="token"
-```
-
-2. Apply Terraform configuration:
-
-```bash
-terraform init
-terraform apply # creates resources in Kentik platform
-```
-
-3. Clean up resources:
-
-```bash
-terraform destroy
+```shell
+export KTAPI_AUTH_EMAIL="john@example.com"
+export KTAPI_AUTH_TOKEN="..."
 ```
 
 {{ .SchemaMarkdown | trimspace }}

@@ -1,0 +1,71 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example usage
+
+{{ tffile "examples/test-types/hostname/main.tf" }}
+
+## Examples for every test type
+
+### `ip`
+
+{{ tffile "examples/test-types/ip/main.tf" }}
+
+### `network_grid`
+
+{{ tffile "examples/test-types/network_grid/main.tf" }}
+
+### `agent`
+
+{{ tffile "examples/test-types/agent/main.tf" }}
+
+### `network_mesh`
+
+{{ tffile "examples/test-types/network_mesh/main.tf" }}
+
+### `flow`
+
+{{ tffile "examples/test-types/flow/main.tf" }}
+
+### `url`
+
+{{ tffile "examples/test-types/url/main.tf" }}
+
+### `page_load`
+
+{{ tffile "examples/test-types/page_load/main.tf" }}
+
+### `dns`
+
+{{ tffile "examples/test-types/dns/main.tf" }}
+
+### `dns_grid`
+
+{{ tffile "examples/test-types/dns_grid/main.tf" }}
+
+## Status
+
+`status` is applied with the SetTestStatus API call, so pausing or resuming a test does not re-create it
+and does not touch its configuration.
+
+## Deprecated attributes
+
+Attributes of the former v202101beta1 API are still accepted and marked deprecated. Where there is a
+v202309 equivalent the value is used for it (for example `settings.protocol` for `settings.ping.protocol`);
+otherwise it is ignored. The upgrade guide lists the mapping.
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Import is supported using the following syntax:
+
+{{ codefile "shell" .ImportFile }}
