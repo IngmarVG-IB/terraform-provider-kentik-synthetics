@@ -10,11 +10,16 @@
       "stability": "stable",
       "status": "partial",
       "surface": [
-        "resource:kentik-synthetics_test (CreateTest, GetTest, UpdateTest, DeleteTest, SetTestStatus)",
+        "resource:kentik-synthetics_test (SyntheticsAdminService: CreateTest, GetTest, UpdateTest, DeleteTest, SetTestStatus)",
+        "resource:kentik-synthetics_agent (SyntheticsAdminService: GetAgent, UpdateAgent, DeleteAgent; adopt/import only)",
+        "resource:kentik-synthetics_agent_alert (SyntheticsAdminService: CreateAgentAlert, GetAgentAlert, UpdateAgentAlert, DeleteAgentAlert)",
         "data-source:kentik-synthetics_test (GetTest)",
         "data-source:kentik-synthetics_tests (ListTests)",
         "data-source:kentik-synthetics_agent (GetAgent)",
-        "data-source:kentik-synthetics_agents (ListAgents)"
+        "data-source:kentik-synthetics_agents (ListAgents)",
+        "data-source:kentik-synthetics_agent_alert (GetAgentAlert)",
+        "data-source:kentik-synthetics_agent_alerts (ListAgentAlerts)",
+        "not covered: SyntheticsDataService (GetResultsForTests, GetResultsForTestsCsv, GetTraceForTest)"
       ]
     }
   ],

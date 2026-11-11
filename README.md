@@ -2,7 +2,8 @@
 
 Manage [Kentik synthetic monitoring](https://kb.kentik.com/v4/Ma00.htm) with Terraform: synthetic tests of
 every type (`hostname`, `ip`, `network_grid`, `agent`, `network_mesh`, `flow`, `url`, `page_load`, `dns`,
-`dns_grid`) and agent lookups, using the stable Kentik v6 gRPC API `kentik.synthetics.v202309`.
+`dns_grid`), private agents (adopt, authorize, label) and agent offline alerts, using the stable Kentik v6
+gRPC API `kentik.synthetics.v202309`.
 
 - User documentation: [Terraform registry](https://registry.terraform.io/providers/kentik/kentik-synthetics/latest/docs)
   (source in [`docs/`](docs/)).

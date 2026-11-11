@@ -34,6 +34,12 @@ working with deprecation warnings; see [docs/UPGRADING.md](docs/UPGRADING.md).
   `flow.max_providers`, `flow.max_ip_targets`, `url.*` and `page_load.*` request options, `dns.record_type`,
   `dns.servers`, `dns.port`, `settings.notification_channels`.
 - Test type `network_mesh`.
+- Resource `kentik-synthetics_agent`: adopts an existing agent (by `agent_id` or import) and manages
+  `alias`, `site_id`, `site_name`, `labels`, `status` (authorize with `AGENT_STATUS_OK`), `family` and
+  location. Agents cannot be created through the API; destroy only forgets the agent unless
+  `delete_on_destroy = true`.
+- Resource `kentik-synthetics_agent_alert` (agent offline alerts; CRUD and import).
+- Data sources `kentik-synthetics_agent_alert` and `kentik-synthetics_agent_alerts`.
 - Import of `kentik-synthetics_test` by ID.
 - Agent attributes `site_name`, `labels`, `cloud_region`, `cloud_provider`, `metadata`.
 - Provider attributes `endpoint` (`KTAPI_ENDPOINT`), `region` (`KTAPI_REGION`, `US`/`EU`) and `timeout`

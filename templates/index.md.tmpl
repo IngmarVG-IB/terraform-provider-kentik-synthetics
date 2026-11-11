@@ -7,7 +7,8 @@ description: |-
 # Kentik Synthetics provider
 
 The Kentik Synthetics provider manages [Kentik synthetic monitoring](https://kb.kentik.com/v4/Ma00.htm):
-synthetic tests of every type supported by the API, private agents and offline-agent alerts.
+synthetic tests of every type supported by the API, existing agents (adopt, authorize, label) and agent
+offline alerts.
 
 It uses the Kentik v6 gRPC API, `kentik.synthetics.v202309`, at `grpc.api.kentik.com:443`
 (`grpc.api.kentik.eu:443` for the EU cluster).
