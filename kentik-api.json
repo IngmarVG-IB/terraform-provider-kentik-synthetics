@@ -1,0 +1,22 @@
+{
+  "schema_source": {
+    "repo": "github.com/kentik/community_sdk_golang",
+    "ref": "v0.2.1-0.20211123051715-62e10d7f63f0"
+  },
+  "services": [
+    {
+      "service": "synthetics",
+      "version": "v202101beta1",
+      "stability": "beta",
+      "status": "deprecated",
+      "surface": [
+        "resource:kentik-synthetics_test",
+        "data-source:kentik-synthetics_agent",
+        "data-source:kentik-synthetics_agents",
+        "data-source:kentik-synthetics_test",
+        "data-source:kentik-synthetics_tests"
+      ]
+    }
+  ],
+  "legacy": []
+}
