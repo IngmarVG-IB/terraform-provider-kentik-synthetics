@@ -1,62 +1,42 @@
-# Terraform Provider for Kentik synthetic tests
+# Terraform Provider for Kentik synthetic monitoring
+
+Manage [Kentik synthetic monitoring](https://kb.kentik.com/v4/Ma00.htm) with Terraform: synthetic tests of
+every type (`hostname`, `ip`, `network_grid`, `agent`, `network_mesh`, `flow`, `url`, `page_load`, `dns`,
+`dns_grid`) and agent lookups, using the stable Kentik v6 gRPC API `kentik.synthetics.v202309`.
+
+- User documentation: [Terraform registry](https://registry.terraform.io/providers/kentik/kentik-synthetics/latest/docs)
+  (source in [`docs/`](docs/)).
+- Upgrading from 0.2.x: [`docs/UPGRADING.md`](docs/UPGRADING.md).
+- Examples: [`examples/`](examples/), including one per test type in [`examples/test-types/`](examples/test-types/).
 
 ## Requirements
 
-- [Go](https://golang.org/doc/install) >= 1.17
-- [Terraform](https://www.terraform.io/downloads.html) >= 0.15
-
-## Usage
-
-Detailed user documentation for the provider can be found [here](https://registry.terraform.io/providers/kentik/kentik-synthetics/latest/docs).
+- Terraform >= 1.13 or OpenTofu
+- Go >= 1.26 (to build)
 
 ## Development
 
-Anybody who wants to contribute to development is welcome to provide pull requests. To work on the provider, install tools listed in [requirements section](#requirements).
+See [AGENTS.md](AGENTS.md) for the layout, conventions and release process. Common commands:
 
-Optional tools:
-- _golangci-lint_: <https://golangci-lint.run/usage/install/#local-installation>
-
-Development steps:
-- Build the provider: `make build`
-- Build and install the provider locally: `make install`
-- Run tests: `make test`
-- Run golangci-lint: `make lint`
-- Format the code: `make fmt`
-- Generate the documentation: `make docs`
-- Check if generated documentation is up-to-date: `make check-docs`
-- Check Go module consistency: `make check-go-mod`
-
-### Test
-
-Tests run the provider against a `test-api-server` that serves data read from [test-data.json](synthetics/test-data.json)
-
-This allows to:
-- avoid the necessity of providing valid API credentials
-- avoid creating resources on remote server
-- make the test results more reliable
-
-Running `make test` will:
-1. Build and run test-api-server which emulates Kentik API v6 by returning static preconfigured responses
-2. Run tests (communication with `test-api-server`)
-3. Shut down `test-api-server`
-
-### Debug
-
-For debugging use [Delve debugger](https://github.com/go-delve/delve)
-
-```bash
-make build
-dlv exec ./terraform-provider-kentik-synthetics
-r -debug
-c
-# attach with terraform following the just-printed out instruction in your terminal
+```sh
+make build              # build the provider binary
+make test               # offline unit tests (fake gRPC API, no credentials needed)
+make lint vuln          # golangci-lint and govulncheck
+make docs               # regenerate docs/ with tfplugindocs
+make validate-examples  # terraform validate every example against the local build
 ```
 
-## Release
+Acceptance tests create real resources and need a Kentik tenant:
+`TF_ACC=1 KTAPI_AUTH_EMAIL=... KTAPI_AUTH_TOKEN=... KTAPI_ACC_AGENT_ID=... make testacc`.
 
-Release process for the provider is based on Git repository tags that follow [semantic versioning](https://semver.org/). Every tag with format _v\[0-9].\[0-9].\[0-9]_ will trigger automatic build of package and publish it in [Terraform registry](https://registry.terraform.io/providers/kentik/kentik-synthetics).
+### Debugging
 
-To release the provider:
-1. Make sure that all code that you want to release is in _master_ branch.
-2. Navigate to [repository releases page](https://github.com/kentik/terraform-provider-kentik-synthetics/releases), click _Draft a new release_ button and put tag version (in _v\[0-9].\[0-9].\[0-9]_ format), name and description.
-3. Go to [GitHub Actions](https://github.com/kentik/terraform-provider-kentik-synthetics/actions) to observe the release job.
+```sh
+make build
+dlv exec ./terraform-provider-kentik-synthetics -- -debug
+# then export the printed TF_REATTACH_PROVIDERS value in the shell that runs terraform
+```
+
+## Security
+
+See [SECURITY.md](SECURITY.md).

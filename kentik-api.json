@@ -1,20 +1,20 @@
 {
   "schema_source": {
-    "repo": "github.com/kentik/community_sdk_golang",
-    "ref": "v0.2.1-0.20211123051715-62e10d7f63f0"
+    "repo": "github.com/kentik/api-schema-public",
+    "ref": "v0.0.0-20261110124345-5d1d2fa374e4"
   },
   "services": [
     {
       "service": "synthetics",
-      "version": "v202101beta1",
-      "stability": "beta",
-      "status": "deprecated",
+      "version": "v202309",
+      "stability": "stable",
+      "status": "partial",
       "surface": [
-        "resource:kentik-synthetics_test",
-        "data-source:kentik-synthetics_agent",
-        "data-source:kentik-synthetics_agents",
-        "data-source:kentik-synthetics_test",
-        "data-source:kentik-synthetics_tests"
+        "resource:kentik-synthetics_test (CreateTest, GetTest, UpdateTest, DeleteTest, SetTestStatus)",
+        "data-source:kentik-synthetics_test (GetTest)",
+        "data-source:kentik-synthetics_tests (ListTests)",
+        "data-source:kentik-synthetics_agent (GetAgent)",
+        "data-source:kentik-synthetics_agents (ListAgents)"
       ]
     }
   ],

@@ -6,6 +6,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+Moves the provider from synthetics API v202101beta1 to the stable v202309. Existing configurations keep
+working with deprecation warnings; see [docs/UPGRADING.md](docs/UPGRADING.md).
+
+### Changed (API)
+
+- The provider now calls the Kentik v6 gRPC API `kentik.synthetics.v202309` through the generated clients of
+  `github.com/kentik/api-schema-public`, wrapped by the new `internal/kentikapi` adapter (TLS, per-RPC
+  `X-CH-Auth-Email`/`X-CH-Auth-API-Token`, timeout, retry with backoff). `community_sdk_golang` is no longer
+  used.
+- `kentik-synthetics_test` has schema version 1. A state upgrader converts 0.2.x state automatically.
+- `kentik-synthetics_test.status` is optional (default `TEST_STATUS_ACTIVE`), accepts `active`/`paused`,
+  and is applied with SetTestStatus.
+- `kentik-synthetics_test.type` is validated and forces replacement; exactly the matching `settings` block
+  must be set (checked at plan time).
+- Settings that the API fills with defaults are Optional+Computed, so they no longer cause diffs.
+- The `id` of `kentik-synthetics_agents` and `kentik-synthetics_tests` is a constant.
+- Empty lists and maps are reported as null.
+- Retry defaults: 5 attempts, 1s initial and 30s maximum delay (was 100 attempts, up to 5m).
+
+### Added
+
+- Test settings from v202309: `labels`, `notes`, `throughput`, `schedule`, `alerting` (including grouped
+  alerting), `health_settings.activation`, `health_settings.disabled_metrics`, DNS, throughput and certificate
+  thresholds, `health_disabled`, `disable_alerts`, `ping.dscp`, `ping.timeout`, `trace.dscp`, `trace.mtu`,
+  `trace.timeout`, `agent.use_local_ip`, `agent.reciprocal`, `ip.use_local_ip`, `network_grid.use_local_ip`,
+  `flow.max_providers`, `flow.max_ip_targets`, `url.*` and `page_load.*` request options, `dns.record_type`,
+  `dns.servers`, `dns.port`, `settings.notification_channels`.
+- Test type `network_mesh`.
+- Import of `kentik-synthetics_test` by ID.
+- Agent attributes `site_name`, `labels`, `cloud_region`, `cloud_provider`, `metadata`.
+- Provider attributes `endpoint` (`KTAPI_ENDPOINT`), `region` (`KTAPI_REGION`, `US`/`EU`) and `timeout`
+  (`KTAPI_TIMEOUT`).
+- Offline unit tests for every resource and data source against an in-memory gRPC fake
+  (`internal/fakesynthetics`), including a verbatim 0.2.x configuration; acceptance tests gated by `TF_ACC`.
+- One example per test type in `examples/test-types/`, included in the docs; `make validate-examples`.
+- `docs/UPGRADING.md` and ADRs in `docs/adr/`.
+
+### Deprecated
+
+- Provider `api_url` / `KTAPI_URL` (use `endpoint` or `region`).
+- Test attributes without a v202309 equivalent or with a new name (`settings.protocol`, `settings.port`,
+  `settings.servers`, `settings.count`, `settings.expiry`, `settings.limit`, `settings.rollup_level`,
+  `settings.monitoring_settings`, `settings.http`, `settings.site`, `settings.tag`, `ping.period`,
+  `ping.expiry`, `trace.period`, `trace.expiry`, `dns.type`, `dns_grid.type`, `dns_grid.targets`,
+  `flow.max_tasks`, `expires_on`); mapped or ignored as documented in the upgrade guide.
+- Agent attributes `name` (use `site_name`) and `cloud_vpc`.
+
+### Removed
+
+- The REST test server and the scripts that started it (`tools/`), `synthetics/test-data.json` and the
+  `run.sh` example scripts.
+
 ### Security
 
 - Raised the Go toolchain to `go 1.26` and updated every dependency to its current release, which fixes all
