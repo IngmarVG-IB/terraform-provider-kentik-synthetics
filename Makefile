@@ -7,7 +7,7 @@ PLUGIN_DIR      := $(HOME)/.terraform.d/plugins/registry.terraform.io/kentik/$(N
 # Pinned tool versions. Tools are built with the local Go toolchain via `go run`
 # so they always understand the Go version in go.mod.
 GOLANGCI_LINT   ?= go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
-GOVULNCHECK     ?= go run golang.org/x/vuln/cmd/govulncheck@v1.1.4
+GOVULNCHECK     ?= go run golang.org/x/vuln/cmd/govulncheck@v1.9.0
 # Terraform-compatible CLI used by fmt and validate-examples (terraform or tofu).
 TF              ?= terraform
 

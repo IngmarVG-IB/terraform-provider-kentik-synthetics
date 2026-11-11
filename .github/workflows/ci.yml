@@ -60,7 +60,13 @@ jobs:
       - name: Point the test harness at the CLI under test
         env:
           CLI_NAME: ${{ matrix.cli.name }}
-        run: echo "TF_ACC_TERRAFORM_PATH=$(command -v "$CLI_NAME")" >> "$GITHUB_ENV"
+        run: |
+          echo "TF_ACC_TERRAFORM_PATH=$(command -v "$CLI_NAME")" >> "$GITHUB_ENV"
+          if [ "$CLI_NAME" = "tofu" ]; then
+            # OpenTofu resolves the in-process test provider against its own registry host.
+            echo "TF_ACC_PROVIDER_HOST=registry.opentofu.org" >> "$GITHUB_ENV"
+            echo "TF_ACC_PROVIDER_NAMESPACE=hashicorp" >> "$GITHUB_ENV"
+          fi
       - name: Build
         run: make build
       - name: Unit tests (offline)
