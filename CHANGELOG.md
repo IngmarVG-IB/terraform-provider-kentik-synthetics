@@ -47,7 +47,7 @@ working with deprecation warnings; see [docs/UPGRADING.md](docs/UPGRADING.md).
 - Offline unit tests for every resource and data source against an in-memory gRPC fake
   (`internal/fakesynthetics`), including a verbatim 0.2.x configuration; acceptance tests gated by `TF_ACC`.
 - One example per test type in `examples/test-types/`, included in the docs; `make validate-examples`.
-- `docs/UPGRADING.md` and ADRs in `docs/adr/`.
+- `docs/UPGRADING.md` and ADRs in `docs/adr/` (0003, terraform-plugin-framework migration, is a proposal).
 
 ### Deprecated
 
