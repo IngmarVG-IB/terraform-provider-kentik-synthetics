@@ -2,71 +2,53 @@ package synthetics
 
 import (
 	"context"
-	"strconv"
-	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/kentik/community_sdk_golang/kentikapi"
-	"github.com/kentik/community_sdk_golang/kentikapi/synthetics"
+	syntheticspb "github.com/kentik/api-schema-public/gen/go/kentik/synthetics/v202309"
 )
 
 const (
+	itemsKey             = "items"
 	invalidTestsCountKey = "invalid_tests_count"
 )
 
 func dataSourceTests() *schema.Resource {
 	return &schema.Resource{
-		Description: "Data source representing list of synthetic tests",
+		Description: "All active and paused synthetic tests of the account.",
 		ReadContext: dataSourceTestsRead,
 		Schema: map[string]*schema.Schema{
 			itemsKey: {
-				Type:     schema.TypeList,
-				Computed: computedOnRead(readList),
-				Elem: &schema.Resource{
-					Schema: makeTestSchema(readList),
-				},
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Tests.",
+				Elem:        &schema.Resource{Schema: makeTestSchema(readList)},
 			},
 			invalidTestsCountKey: {
-				Type:     schema.TypeInt,
-				Computed: computedOnRead(readList),
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of invalid entries encountered while collecting data.",
 			},
 		},
 	}
 }
 
-func dataSourceTestsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, "List Tests Kentik API request")
-	resp, httpResp, err := m.(*kentikapi.Client).SyntheticsAdminServiceAPI.TestsList(ctx).Execute()
-	tflog.Debug(ctx, "List Tests Kentik API response", map[string]interface{}{"response": resp})
+func dataSourceTestsRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+	c := m.(*apiClient)
+	resp, err := c.admin.ListTests(ctx, &syntheticspb.ListTestsRequest{})
 	if err != nil {
-		return detailedDiagError("Failed to read tests", err, httpResp)
+		return apiError("Failed to list tests", err)
 	}
-
-	if resp.Tests != nil {
-		err = d.Set(itemsKey, testsToMaps(*resp.Tests))
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	items := make([]any, 0, len(resp.GetTests()))
+	for _, t := range resp.GetTests() {
+		items = append(items, testToDataSourceMap(t, readList))
 	}
-
-	if resp.InvalidTestsCount != nil {
-		err = d.Set(invalidTestsCountKey, resp.InvalidTestsCount)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	if err := d.Set(itemsKey, items); err != nil {
+		return diag.FromErr(err)
 	}
-
-	// use UNIX time as ID to force list update every time Terraform asks for the list
-	d.SetId(strconv.Itoa(int(time.Now().Unix())))
+	if err := d.Set(invalidTestsCountKey, int(resp.GetInvalidCount())); err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId("kentik-synthetics-tests")
 	return nil
-}
-
-func testsToMaps(tests []synthetics.V202101beta1Test) []interface{} {
-	result := make([]interface{}, len(tests))
-	for i := range tests {
-		result[i] = testToMap(&tests[i])
-	}
-	return result
 }

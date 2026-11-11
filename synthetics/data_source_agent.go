@@ -2,71 +2,32 @@ package synthetics
 
 import (
 	"context"
-	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/kentik/community_sdk_golang/kentikapi"
-	"github.com/kentik/community_sdk_golang/kentikapi/synthetics"
+	syntheticspb "github.com/kentik/api-schema-public/gen/go/kentik/synthetics/v202309"
 )
 
 func dataSourceAgent() *schema.Resource {
 	return &schema.Resource{
-		Description: "Data source representing single synthetic test agent",
+		Description: "A single synthetic monitoring agent (global or private), looked up by ID.",
 		ReadContext: dataSourceAgentRead,
 		Schema:      makeAgentSchema(readSingle),
 	}
 }
 
-func dataSourceAgentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, "Get Agent Kentik API request", map[string]interface{}{"ID": d.Get(idKey).(string)})
-	resp, httpResp, err := m.(*kentikapi.Client).SyntheticsAdminServiceAPI.
-		AgentGet(ctx, d.Get(idKey).(string)).
-		Execute()
-	tflog.Debug(ctx, "Get Agent Kentik API response", map[string]interface{}{"response": resp})
+func dataSourceAgentRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+	c := m.(*apiClient)
+	id := d.Get(idKey).(string)
+	resp, err := c.admin.GetAgent(ctx, &syntheticspb.GetAgentRequest{Id: id})
 	if err != nil {
-		return detailedDiagError("Failed to read agent", err, httpResp)
+		return apiError("Failed to read agent "+id, err)
 	}
-
-	for k, v := range agentToMap(resp.Agent) {
-		if err = d.Set(k, v); err != nil {
-			return diag.FromErr(err)
+	for k, v := range agentToTF(resp.GetAgent(), makeAgentSchema(readSingle)) {
+		if err := d.Set(k, v); err != nil {
+			return diag.Errorf("set %s: %v", k, err)
 		}
 	}
-
-	d.SetId(resp.Agent.GetId())
+	d.SetId(resp.GetAgent().GetId())
 	return nil
-}
-
-func agentToMap(obj *synthetics.V202101beta1Agent) map[string]interface{} {
-	if obj == nil {
-		return nil
-	}
-
-	m := make(map[string]interface{})
-	m[idKey] = obj.Id
-	m["name"] = obj.Name
-	m["status"] = obj.Status
-	m["alias"] = obj.Alias
-	m["type"] = obj.Type
-	m["os"] = obj.Os
-	m["ip"] = obj.Ip
-	m["lat"] = obj.Lat
-	m["long"] = obj.Long
-	if obj.LastAuthed != nil {
-		m["last_authed"] = obj.LastAuthed.Format(time.RFC3339Nano)
-	}
-	m["family"] = obj.Family
-	m["asn"] = obj.Asn
-	m["site_id"] = obj.SiteId
-	m["version"] = obj.Version
-	m["city"] = obj.City
-	m["region"] = obj.Region
-	m["country"] = obj.Country
-	m["test_ids"] = obj.TestIds
-	m["local_ip"] = obj.LocalIp
-	m["cloud_vpc"] = obj.CloudVpc
-	m["agent_impl"] = obj.AgentImpl
-	return m
 }

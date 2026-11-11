@@ -1,7 +1,7 @@
-data "kentik-synthetics_agent" "agent" {
-  id = "968" # ID of Amsterdam Agent in test-data.json
+data "kentik-synthetics_agent" "amsterdam" {
+  id = "968"
 }
 
-output "agent_get" {
-  value = data.kentik-synthetics_agent.agent
+output "amsterdam_agent_site" {
+  value = data.kentik-synthetics_agent.amsterdam.site_name
 }

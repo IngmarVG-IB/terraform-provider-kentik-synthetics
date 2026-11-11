@@ -8,8 +8,8 @@ PLUGIN_DIR      := $(HOME)/.terraform.d/plugins/registry.terraform.io/kentik/$(N
 # so they always understand the Go version in go.mod.
 GOLANGCI_LINT   ?= go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 GOVULNCHECK     ?= go run golang.org/x/vuln/cmd/govulncheck@v1.1.4
-
-TEST_API_SERVER_ENDPOINT ?= localhost:9955
+# Terraform-compatible CLI used by fmt and validate-examples (terraform or tofu).
+TF              ?= terraform
 
 .DEFAULT_GOAL := build
 
@@ -23,25 +23,22 @@ install: build ## Install the provider into the local plugin directory
 	mv $(BINARY) $(PLUGIN_DIR)/
 
 .PHONY: test
-test: ## Run offline unit tests (no Kentik API access needed)
-	TEST_API_SERVER_ENDPOINT=$(TEST_API_SERVER_ENDPOINT) ./tools/start_test_api_server.sh
-	KTAPI_URL="http://$(TEST_API_SERVER_ENDPOINT)" KTAPI_AUTH_EMAIL="dummy@example.com" KTAPI_AUTH_TOKEN="dummy" \
-		go test ./... $(TESTARGS) -timeout=10m -count=1 || (./tools/stop_test_api_server.sh && exit 1)
-	./tools/stop_test_api_server.sh
+test: ## Run offline unit tests (fake gRPC API over bufconn; needs terraform or tofu on PATH)
+	go test ./... $(TESTARGS) -timeout=15m -count=1
 
 .PHONY: testacc
-testacc: ## Run acceptance tests against a live tenant (needs TF_ACC=1, KTAPI_AUTH_EMAIL, KTAPI_AUTH_TOKEN)
+testacc: ## Acceptance tests against a LIVE tenant (KTAPI_AUTH_EMAIL, KTAPI_AUTH_TOKEN, KTAPI_ACC_AGENT_ID)
 	@test -n "$$KTAPI_AUTH_EMAIL" -a -n "$$KTAPI_AUTH_TOKEN" || (echo "KTAPI_AUTH_EMAIL and KTAPI_AUTH_TOKEN must be set" && exit 1)
-	TF_ACC=1 go test ./... -run '^TestAcc' $(TESTARGS) -timeout=60m -count=1
+	TF_ACC=1 go test ./synthetics/ -run '^TestAcc' $(TESTARGS) -timeout=60m -count=1 -v
 
 .PHONY: lint
 lint: ## Run golangci-lint
 	$(GOLANGCI_LINT) run ./...
 
 .PHONY: fmt
-fmt: ## Format Go code (gofumpt + goimports)
+fmt: ## Format Go code (gofumpt + goimports) and Terraform examples
 	$(GOLANGCI_LINT) fmt ./...
-	terraform fmt -recursive ./examples/
+	$(TF) fmt -recursive ./examples/ ./synthetics/testdata/
 
 .PHONY: vuln
 vuln: ## Scan for known vulnerabilities
@@ -63,10 +60,21 @@ check-go-mod: ## Fail if go.mod/go.sum are not tidy
 	go mod tidy
 	git diff --exit-code -- go.mod go.sum
 
-.PHONY: help
-help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-16s %s\n", $$1, $$2}'
-
 .PHONY: check-manifest
 check-manifest: ## Validate kentik-api.json
 	go test -run '^TestKentikAPIManifest$$' -count=1 .
+
+# Uses a throw-away CLI config with dev_overrides pointing at the local build, so no provider is
+# downloaded, no `init` is needed and no API is called.
+.PHONY: validate-examples
+validate-examples: build ## terraform validate every example against the local build
+	@set -e; rc=$$(mktemp); \
+	printf 'provider_installation {\n  dev_overrides {\n    "kentik/kentik-synthetics" = "%s"\n  }\n  direct {}\n}\n' "$(CURDIR)" > "$$rc"; \
+	for d in $$(find examples -name '*.tf' -not -path '*/common/*' -exec dirname {} \; | sort -u); do \
+		echo "==> $$d"; \
+		TF_CLI_CONFIG_FILE="$$rc" $(TF) -chdir="$$d" validate -no-color; \
+	done
+
+.PHONY: help
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-18s %s\n", $$1, $$2}'

@@ -10,11 +10,8 @@ import (
 	"github.com/kentik/terraform-provider-kentik-synthetics/synthetics"
 )
 
-// Set by goreleaser via -ldflags.
-var (
-	version = "dev"
-	commit  = "none"
-)
+// version is set by goreleaser via -ldflags and reported in the API user agent.
+var version = "dev"
 
 func main() {
 	var debugMode bool
@@ -22,12 +19,10 @@ func main() {
 	flag.Parse()
 
 	opts := &plugin.ServeOpts{
-		ProviderFunc: synthetics.NewProvider,
+		ProviderFunc: synthetics.New(version),
 		ProviderAddr: "registry.terraform.io/kentik/kentik-synthetics",
 		Debug:        debugMode,
 	}
-	_ = commit
-	_ = version
 
 	plugin.Serve(opts)
 }

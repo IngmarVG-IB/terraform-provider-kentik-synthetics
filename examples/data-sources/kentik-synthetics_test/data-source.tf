@@ -1,7 +1,7 @@
-data "kentik-synthetics_test" "test" {
-  id = "1" # ID of "github.com ip test" in test-data.json
+data "kentik-synthetics_test" "existing" {
+  id = "3271"
 }
 
-output "test_get" {
-  value = data.kentik-synthetics_test.test
+output "existing_test_status" {
+  value = data.kentik-synthetics_test.existing.status
 }

@@ -170,6 +170,13 @@ func (s *Server) Test(id string) *syntheticspb.Test {
 	return cloneOrNil(s.tests[id])
 }
 
+// RemoveTest deletes a test behind the provider's back (simulates a change made outside Terraform).
+func (s *Server) RemoveTest(id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.tests, id)
+}
+
 // Agent returns a copy of the stored agent, or nil.
 func (s *Server) Agent(id string) *syntheticspb.Agent {
 	s.mu.Lock()

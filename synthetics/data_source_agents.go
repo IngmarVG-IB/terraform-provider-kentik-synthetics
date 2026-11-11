@@ -3,19 +3,14 @@ package synthetics
 import (
 	"context"
 	"math"
-	"strconv"
-	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	geo "github.com/kellydunn/golang-geo"
-	"github.com/kentik/community_sdk_golang/kentikapi"
-	"github.com/kentik/community_sdk_golang/kentikapi/synthetics"
+	syntheticspb "github.com/kentik/api-schema-public/gen/go/kentik/synthetics/v202309"
 )
 
 const (
-	itemsKey              = "items"
 	invalidAgentsCountKey = "invalid_agents_count"
 	latitudeKey           = "latitude"
 	longitudeKey          = "longitude"
@@ -25,109 +20,91 @@ const (
 
 func dataSourceAgents() *schema.Resource {
 	return &schema.Resource{
-		Description: "Data source representing list of synthetic test agents",
+		Description: "All synthetic monitoring agents available to the account, optionally filtered by " +
+			"great-circle distance from a reference point.",
 		ReadContext: dataSourceAgentsRead,
 		Schema: map[string]*schema.Schema{
 			itemsKey: {
-				Type:     schema.TypeList,
-				Computed: computedOnRead(readList),
-				Elem: &schema.Resource{
-					Schema: makeAgentSchema(readList),
-				},
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Agents.",
+				Elem:        &schema.Resource{Schema: makeAgentSchema(readList)},
 			},
 			invalidAgentsCountKey: {
-				Type:     schema.TypeInt,
-				Computed: computedOnRead(readList),
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of invalid entries encountered while collecting data.",
 			},
 			latitudeKey: {
-				Type:     schema.TypeFloat,
-				Optional: true,
+				Type:         schema.TypeFloat,
+				Optional:     true,
+				RequiredWith: []string{longitudeKey},
+				Description:  "Latitude of the reference point for distance filtering (signed decimal degrees).",
 			},
 			longitudeKey: {
-				Type:     schema.TypeFloat,
-				Optional: true,
+				Type:         schema.TypeFloat,
+				Optional:     true,
+				RequiredWith: []string{latitudeKey},
+				Description:  "Longitude of the reference point for distance filtering (signed decimal degrees).",
 			},
 			minDistanceKey: {
-				Type:     schema.TypeFloat,
-				Optional: true,
+				Type:        schema.TypeFloat,
+				Optional:    true,
+				Description: "Minimum distance from the reference point, in kilometers (default 0).",
 			},
 			maxDistanceKey: {
-				Type:     schema.TypeFloat,
-				Optional: true,
+				Type:        schema.TypeFloat,
+				Optional:    true,
+				Description: "Maximum distance from the reference point, in kilometers (default unlimited).",
 			},
 		},
 	}
 }
 
-func dataSourceAgentsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, "List Agent Kentik API request")
-	resp, httpResp, err := m.(*kentikapi.Client).SyntheticsAdminServiceAPI.AgentsList(ctx).Execute()
-	tflog.Debug(ctx, "List Agent Kentik API response", map[string]interface{}{"response": resp})
+func dataSourceAgentsRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+	c := m.(*apiClient)
+	resp, err := c.admin.ListAgents(ctx, &syntheticspb.ListAgentsRequest{})
 	if err != nil {
-		return detailedDiagError("Failed to read agents", err, httpResp)
+		return apiError("Failed to list agents", err)
 	}
 
-	if resp.Agents != nil {
-		agents := filterAgents(*resp.Agents, d)
-		agentsMap := agentsToMaps(agents)
-		err = d.Set(itemsKey, agentsMap)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	s := makeAgentSchema(readList)
+	agents := filterAgents(resp.GetAgents(), d)
+	items := make([]any, 0, len(agents))
+	for _, a := range agents {
+		items = append(items, agentToTF(a, s))
 	}
-
-	if resp.InvalidAgentsCount != nil {
-		err = d.Set(invalidAgentsCountKey, resp.InvalidAgentsCount)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	if err := d.Set(itemsKey, items); err != nil {
+		return diag.FromErr(err)
 	}
-
-	// use UNIX time as ID to force list update every time Terraform asks for the list
-	d.SetId(strconv.Itoa(int(time.Now().Unix())))
+	if err := d.Set(invalidAgentsCountKey, int(resp.GetInvalidCount())); err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId("kentik-synthetics-agents")
 	return nil
 }
 
-func agentsToMaps(agents []synthetics.V202101beta1Agent) []interface{} {
-	result := make([]interface{}, len(agents))
-	for i := range agents {
-		result[i] = agentToMap(&agents[i])
+func filterAgents(agents []*syntheticspb.Agent, d *schema.ResourceData) []*syntheticspb.Agent {
+	lat, latOK := d.GetOk(latitudeKey)
+	lon, lonOK := d.GetOk(longitudeKey)
+	if !latOK || !lonOK {
+		return agents
 	}
-	return result
-}
-
-func filterAgents(agents []synthetics.V202101beta1Agent, d *schema.ResourceData) []synthetics.V202101beta1Agent {
-	lat, latExists := d.GetOk(latitudeKey)
-	lon, lonExists := d.GetOk(longitudeKey)
-	minDist, minDistExists := d.GetOk(minDistanceKey)
-	maxDist, maxDistExists := d.GetOk(maxDistanceKey)
-
-	if !minDistExists {
-		minDist = 0.0
+	minDist, maxDist := 0.0, math.Inf(1)
+	if v, ok := d.GetOk(minDistanceKey); ok {
+		minDist = v.(float64)
 	}
-	if !maxDistExists {
-		maxDist = math.Inf(0)
+	if v, ok := d.GetOk(maxDistanceKey); ok {
+		maxDist = v.(float64)
 	}
 
-	if latExists && lonExists {
-		agents = filterAgentsByDistance(agents, lat.(float64), lon.(float64), minDist.(float64), maxDist.(float64))
-	}
-
-	return agents
-}
-
-func filterAgentsByDistance(agents []synthetics.V202101beta1Agent,
-	lat float64, long float64, minDist float64, maxDist float64,
-) []synthetics.V202101beta1Agent {
-	var filteredAgents []synthetics.V202101beta1Agent
-	referencePoint := geo.NewPoint(lat, long)
-	for _, agent := range agents {
-		agentCoordinates := geo.NewPoint(*agent.Lat, *agent.Long)
-		dist := referencePoint.GreatCircleDistance(agentCoordinates)
+	ref := geo.NewPoint(lat.(float64), lon.(float64))
+	var out []*syntheticspb.Agent
+	for _, a := range agents {
+		dist := ref.GreatCircleDistance(geo.NewPoint(a.GetLat(), a.GetLong()))
 		if dist >= minDist && dist <= maxDist {
-			filteredAgents = append(filteredAgents, agent)
+			out = append(out, a)
 		}
 	}
-
-	return filteredAgents
+	return out
 }

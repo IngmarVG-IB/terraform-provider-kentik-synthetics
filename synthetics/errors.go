@@ -2,22 +2,27 @@ package synthetics
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-func detailedDiagError(summary string, err error, r *http.Response) diag.Diagnostics {
-	return diag.Diagnostics{diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  summary,
-		Detail:   detail(r, err),
-	}}
+// apiError converts a gRPC error into a Terraform diagnostic with the status code and message.
+func apiError(summary string, err error) diag.Diagnostics {
+	st, ok := status.FromError(err)
+	if !ok {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: summary, Detail: err.Error()}}
+	}
+	detail := fmt.Sprintf("Kentik API returned %s: %s", st.Code(), st.Message())
+	switch st.Code() {
+	case codes.Unauthenticated:
+		detail += "\nCheck the provider email and token (KTAPI_AUTH_EMAIL / KTAPI_AUTH_TOKEN)."
+	case codes.PermissionDenied:
+		detail += "\nThe API token lacks the permission required for this operation."
+	default:
+	}
+	return diag.Diagnostics{{Severity: diag.Error, Summary: summary, Detail: detail}}
 }
 
-func detail(r *http.Response, err error) string {
-	if r != nil {
-		return fmt.Sprintf("error: %v, status: %v, body: %v", err.Error(), r.Status, r.Body)
-	}
-	return err.Error()
-}
+func isNotFound(err error) bool { return status.Code(err) == codes.NotFound }

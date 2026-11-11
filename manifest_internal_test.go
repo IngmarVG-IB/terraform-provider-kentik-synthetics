@@ -69,6 +69,17 @@ func TestKentikAPIManifest(t *testing.T) {
 			t.Errorf("services[%d].surface is empty", i)
 		}
 	}
+	// The schema ref must be the api-schema-public version pinned in go.mod.
+	if m.SchemaSource.Repo == "github.com/kentik/api-schema-public" {
+		gomod, err := os.ReadFile("go.mod")
+		if err != nil {
+			t.Fatalf("read go.mod: %v", err)
+		}
+		pin := regexp.MustCompile(`(?m)^\s*github\.com/kentik/api-schema-public\s+(\S+)`).FindSubmatch(gomod)
+		if pin == nil || string(pin[1]) != m.SchemaSource.Ref {
+			t.Errorf("schema_source.ref %q does not match go.mod (%q)", m.SchemaSource.Ref, pin)
+		}
+	}
 	for i, l := range m.Legacy {
 		if l.API == "" || !status[l.Status] {
 			t.Errorf("legacy[%d] is invalid: %+v", i, l)
