@@ -134,7 +134,7 @@ func configure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.D
 	}
 
 	strippedCfg := stripSensitiveData(cfg)
-	cfgJSON, _ := json.Marshal(strippedCfg) //nolint: errcheck
+	cfgJSON, _ := json.Marshal(strippedCfg) //nolint:gosec // token is stripped above
 	tflog.Debug(ctx, fmt.Sprintf("Creating Kentik API client with config: %+v, JSON: %v", strippedCfg, string(cfgJSON)))
 
 	return kentikapi.NewClient(cfg), nil

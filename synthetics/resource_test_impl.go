@@ -135,7 +135,6 @@ func patchTestFields(test *synthetics.V202101beta1Test) []string {
 	return append(fields, testSettingsFields(test.Settings)...)
 }
 
-//nolint: gocyclo
 func testSettingsFields(ts *synthetics.V202101beta1TestSettings) []string {
 	var fields []string
 
@@ -248,7 +247,6 @@ func testSettingsFields(ts *synthetics.V202101beta1TestSettings) []string {
 	return fields
 }
 
-//nolint: gocyclo
 func healthSettingsFields(hs *synthetics.V202101beta1HealthSettings) []string {
 	var fields []string
 

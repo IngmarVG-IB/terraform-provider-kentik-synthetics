@@ -210,7 +210,6 @@ func testHealthSettingsToMapSlice(obj *synthetics.V202101beta1HealthSettings) []
 	}}
 }
 
-//nolint: gocyclo, gocognit
 func areAllHSFieldsZeroValue(obj *synthetics.V202101beta1HealthSettings) bool {
 	return obj.GetLatencyCritical() == 0 &&
 		obj.GetLatencyWarning() == 0 &&
@@ -335,7 +334,6 @@ func resourceDataToTest(d *schema.ResourceData) (*synthetics.V202101beta1Test, e
 	return test, nil
 }
 
-//nolint: gocyclo
 func resourceDataToTestSettings(data interface{}) (*synthetics.V202101beta1TestSettings, error) {
 	m, err := getObjectFromNestedResourceData(data)
 	if err != nil {

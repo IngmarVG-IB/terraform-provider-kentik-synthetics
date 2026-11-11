@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/kentik/terraform-provider-kentik-synthetics/synthetics"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kentik/terraform-provider-kentik-synthetics/synthetics"
 )
 
 func TestProvider(t *testing.T) {
