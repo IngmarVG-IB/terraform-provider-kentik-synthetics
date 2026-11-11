@@ -94,20 +94,30 @@ func TestProtoConv_AgentWrapperMessages(t *testing.T) {
 	assert.Equal(t, []any{"10.0.0.1", "10.0.0.2"}, ips)
 }
 
-func TestSchema_DescriptionsFromProto(t *testing.T) {
+func TestSchema_EveryAttributeHasADescription(t *testing.T) {
 	t.Parallel()
+	p := NewProvider()
 	var missing []string
-	for path, sch := range flattenSchema("", makeTestSchema(create)) {
-		if sch.Description == "" {
-			missing = append(missing, path)
+	check := func(kind string, m map[string]*schema.Resource) {
+		for name, r := range m {
+			if r.Description == "" {
+				missing = append(missing, kind+" "+name)
+			}
+			for path, sch := range flattenSchema("", r.Schema) {
+				if sch.Description == "" {
+					missing = append(missing, kind+" "+name+": "+path)
+				}
+			}
 		}
 	}
-	for path, sch := range flattenSchema("", makeAgentSchema(create)) {
+	check("resource", p.ResourcesMap)
+	check("data source", p.DataSourcesMap)
+	for path, sch := range flattenSchema("", p.Schema) {
 		if sch.Description == "" {
-			missing = append(missing, "agent:"+path)
+			missing = append(missing, "provider: "+path)
 		}
 	}
-	assert.Empty(t, missing, "attributes without a description (add one to the proto or via description())")
+	assert.Empty(t, missing, "add a description to the proto field or with description()")
 }
 
 func flattenSchema(prefix string, s map[string]*schema.Schema) map[string]*schema.Schema {

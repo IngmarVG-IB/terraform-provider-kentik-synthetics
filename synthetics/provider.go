@@ -46,13 +46,17 @@ func New(version string, opts ...Option) func() *schema.Provider {
 		p := &schema.Provider{
 			Schema: providerSchema(),
 			ResourcesMap: map[string]*schema.Resource{
-				"kentik-synthetics_test": resourceTest(),
+				"kentik-synthetics_test":        resourceTest(),
+				"kentik-synthetics_agent":       resourceAgent(),
+				"kentik-synthetics_agent_alert": resourceAgentAlert(),
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"kentik-synthetics_agent":  dataSourceAgent(),
-				"kentik-synthetics_agents": dataSourceAgents(),
-				"kentik-synthetics_test":   dataSourceTest(),
-				"kentik-synthetics_tests":  dataSourceTests(),
+				"kentik-synthetics_agent":        dataSourceAgent(),
+				"kentik-synthetics_agents":       dataSourceAgents(),
+				"kentik-synthetics_test":         dataSourceTest(),
+				"kentik-synthetics_tests":        dataSourceTests(),
+				"kentik-synthetics_agent_alert":  dataSourceAgentAlert(),
+				"kentik-synthetics_agent_alerts": dataSourceAgentAlerts(),
 			},
 		}
 		p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
